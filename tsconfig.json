@@ -1,0 +1,33 @@
+{
+  // TypeScript configuration for the server-side code only
+  "compilerOptions": {
+    "rootDir": "./src",
+    "outDir": "./dist",
+
+    // Environment / module resolution for Node
+    "module": "nodenext",
+    "target": "es2022",
+    "moduleResolution": "nodenext",
+
+    // Language/emit options
+    "allowJs": true,
+    "resolveJsonModule": true,
+    "esModuleInterop": true,
+    "skipLibCheck": true,
+
+    // Other outputs
+    "sourceMap": true,
+    "declaration": false,
+
+    // Strictness
+    "strict": true,
+    "noUncheckedIndexedAccess": true,
+    "exactOptionalPropertyTypes": true,
+
+    // JSX
+    "jsx": "react-jsx"
+  },
+
+  "include": ["src/**/*"],
+  "exclude": ["node_modules", "dist", "client"]
+}

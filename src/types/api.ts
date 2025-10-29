@@ -1,0 +1,21 @@
+// API Request/Response types
+export interface GenerateRequest {
+  lyrics: string;
+  style?: {
+    fontFamily?: string;
+    fontSize?: number;
+    backgroundColor?: string;
+    fontColor?: string;
+    isAutoFit?: boolean;
+  };
+}
+
+export interface GenerateResponse {
+  presentationUrl: string;
+  slideCount: number;
+}
+
+export interface ErrorResponse {
+  error: string;
+  code?: string;
+}

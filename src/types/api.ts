@@ -7,6 +7,9 @@ export interface GenerateRequest {
     backgroundColor?: string;
     fontColor?: string;
     isAutoFit?: boolean;
+    isBold?: boolean;
+    isItalic?: boolean;
+    isCentered?: boolean;
   };
 }
 

@@ -34,6 +34,14 @@ export interface SlideRequest {
     textRange: { type: string };
     fields: string;
   };
+  updateParagraphStyle?: {
+    objectId: string;
+    style: {
+      alignment?: string;
+    };
+    textRange: { type: string };
+    fields: string;
+  };
   updatePageProperties?: {
     objectId: string;
     pageProperties: {
@@ -51,11 +59,14 @@ export interface SlideRequest {
     };
     fields: string;
   };
-    updateShapeProperties?: {
-      objectId: string;
-      shapeProperties: {
-        shapeAutoSize: string;
-      };
-      fields: string;
+  updateShapeProperties?: {
+    objectId: string;
+    shapeProperties: {
+      shapeAutoSize: string;
     };
+    fields: string;
+  };
+  deleteObject?: {
+    objectId: string;
+  };
 }

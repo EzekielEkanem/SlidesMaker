@@ -11,12 +11,25 @@ function computeFontSizeForText(text: string, preferred?: number, isAutoFit?: bo
 
   const chars = Math.max(1, text.length);
   const lines = Math.max(1, text.split(/\r?\n/).length);
-  const maxChars = 350; // target capacity before shrinking
-  const maxLines = 9;   // target max lines before shrinking
-  const charScale = Math.min(1, Math.sqrt(maxChars / chars));
-  const lineScale = Math.min(1, Math.sqrt(maxLines / lines));
-  const scale = Math.max(0.3, Math.min(charScale, lineScale));
-  const size = Math.max(8, Math.round(base * scale));
+  
+  // More aggressive scaling based on actual slide constraints
+  // Standard slide can fit ~600 chars at 24pt, ~40 chars per line at 10 lines
+  const maxCharsPerSlide = 600;
+  const maxLinesPerSlide = 10;
+  
+  // Calculate scale factors - using linear scaling for more aggressive adjustment
+  const charScale = Math.min(1, maxCharsPerSlide / chars);
+  const lineScale = Math.min(1, maxLinesPerSlide / lines);
+  
+  // Use the more restrictive constraint
+  const scale = Math.min(charScale, lineScale);
+  
+  // Apply scale with a floor to maintain readability
+  const scaledSize = base * scale;
+  const size = Math.max(10, Math.min(base, Math.round(scaledSize)));
+  
+  console.log(`Auto-fit: ${chars} chars, ${lines} lines -> ${size}pt (scale: ${scale.toFixed(2)})`);
+  
   return { magnitude: size, unit: 'PT' as const };
 }
 
@@ -45,6 +58,9 @@ export async function generateHandler(req: Request, res: Response) {
     // Create new presentation
     const presentation = await googleClient.createPresentation('My Lyrics Presentation');
     const presentationId = presentation.presentationId!;
+
+    // Google Slides automatically creates a blank first slide. Get its ID to delete it.
+    const defaultSlideId = presentation.slides?.[0]?.objectId;
 
     // Prepare batch update requests
     const requests = groups.map((group, index) => {
@@ -82,7 +98,8 @@ export async function generateHandler(req: Request, res: Response) {
         });
       }
 
-      // Create text box
+      // Create text box - using more slide area for better text fitting
+      // Standard slide: 10" wide x 7.5" tall = 9144000 x 6858000 EMU
       slideRequests.push({
         createShape: {
           objectId: boxId,
@@ -90,14 +107,14 @@ export async function generateHandler(req: Request, res: Response) {
           elementProperties: {
             pageObjectId: slideId,
             size: {
-              width: { magnitude: 7200000, unit: 'EMU' }, // ~90% of slide width
-              height: { magnitude: 5400000, unit: 'EMU' }  // ~90% of slide height
+              width: { magnitude: 8500000, unit: 'EMU' },  // ~93% of slide width (9.3")
+              height: { magnitude: 6200000, unit: 'EMU' }  // ~90% of slide height (6.8")
             },
             transform: {
               scaleX: 1,
               scaleY: 1,
-              translateX: 400000, // Center horizontally
-              translateY: 400000, // Center vertically
+              translateX: 320000,  // Center with margin (~0.35")
+              translateY: 330000,  // Center with margin (~0.36")
               unit: 'EMU'
             }
           }
@@ -127,6 +144,14 @@ export async function generateHandler(req: Request, res: Response) {
           stylePayload.foregroundColor = { opaqueColor: { rgbColor: hexToRgb(style.fontColor) } };
           fields.push('foregroundColor');
         }
+        if (style.isBold) {
+          stylePayload.bold = true;
+          fields.push('bold');
+        }
+        if (style.isItalic) {
+          stylePayload.italic = true;
+          fields.push('italic');
+        }
 
         slideRequests.push({
           updateTextStyle: {
@@ -136,13 +161,34 @@ export async function generateHandler(req: Request, res: Response) {
             fields: fields.join(',')
           }
         });
+
+        // Paragraph alignment (center) if selected
+        if (style.isCentered) {
+          slideRequests.push({
+            updateParagraphStyle: {
+              objectId: boxId,
+              style: { alignment: 'CENTER' },
+              textRange: { type: 'ALL' },
+              fields: 'alignment'
+            }
+          });
+        }
       }
 
       return slideRequests;
     }).flat();
 
-  // Already flat from the map().flat() above
-  const allRequests = requests;
+    // Already flat from the map().flat() above
+    const allRequests = requests;
+
+    // Delete the default blank first slide if it exists
+    if (defaultSlideId) {
+      allRequests.push({
+        deleteObject: {
+          objectId: defaultSlideId
+        }
+      });
+    }
     
     // Execute batch update
     await googleClient.batchUpdate(presentationId, allRequests);

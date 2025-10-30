@@ -145,7 +145,17 @@ export function StyleControls({ style, onChange }: StyleControlsProps) {
         </div>
 
 
-        <div className="col-span-2 pt-4 border-t border-gray-200 mt-2">
+        <div className="col-span-2 pt-4 border-t border-gray-200 mt-2 space-y-3">
+          <label className="flex items-center gap-3 text-sm font-medium text-gray-700">
+            <input 
+              type="checkbox"
+              checked={style.isCentered}
+              onChange={(e) => handleChange('isCentered', e.target.checked)}
+              className="h-5 w-5 rounded text-blue-600 focus:ring-blue-500 border-gray-300"
+            />
+            Center text
+          </label>
+
           <label className="flex items-center gap-3 text-sm font-medium text-gray-700">
             <input 
               type="checkbox"
@@ -154,6 +164,26 @@ export function StyleControls({ style, onChange }: StyleControlsProps) {
               className="h-5 w-5 rounded text-blue-600 focus:ring-blue-500 border-gray-300"
             />
             Auto-fit text to slide
+          </label>
+
+          <label className="flex items-center gap-3 text-sm font-medium text-gray-700">
+            <input 
+              type="checkbox"
+              checked={style.isBold}
+              onChange={(e) => handleChange('isBold', e.target.checked)}
+              className="h-5 w-5 rounded text-blue-600 focus:ring-blue-500 border-gray-300"
+            />
+            <span className="font-bold">Bold</span>
+          </label>
+
+          <label className="flex items-center gap-3 text-sm font-medium text-gray-700">
+            <input 
+              type="checkbox"
+              checked={style.isItalic}
+              onChange={(e) => handleChange('isItalic', e.target.checked)}
+              className="h-5 w-5 rounded text-blue-600 focus:ring-blue-500 border-gray-300"
+            />
+            <span className="italic">Italic</span>
           </label>
         </div>
       </div>

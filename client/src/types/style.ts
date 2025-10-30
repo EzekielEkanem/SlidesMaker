@@ -4,14 +4,20 @@ export interface SlideStyle {
   backgroundColor?: string;
   fontColor?: string;
   isAutoFit?: boolean;
+  isBold?: boolean;
+  isItalic?: boolean;
+  isCentered?: boolean;
 }
 
 export const DEFAULT_STYLE: SlideStyle = {
-  fontFamily: 'Arial',
+  fontFamily: 'Times New Roman',
   fontSize: 24,
   backgroundColor: '#ffffff',
   fontColor: '#000000',
-  isAutoFit: true
+  isAutoFit: true,
+  isBold: true,
+  isItalic: false,
+  isCentered: true
 };
 
 export const FONT_FAMILIES = [

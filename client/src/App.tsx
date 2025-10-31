@@ -4,10 +4,38 @@ import { SlideStyle, DEFAULT_STYLE } from './types/style';
 
 export default function App() {
   const [lyrics, setLyrics] = useState('');
+  const [title, setTitle] = useState('');
+  const [artist, setArtist] = useState('');
   const [style, setStyle] = useState<SlideStyle>(DEFAULT_STYLE);
   const [loading, setLoading] = useState(false);
+  const [finding, setFinding] = useState(false);
   const [result, setResult] = useState<{ presentationUrl: string; slideCount: number } | null>(null);
   const [error, setError] = useState<string | null>(null);
+
+  const getApiBase = () => import.meta.env.VITE_API_BASE_URL || '';
+
+  async function handleFindLyrics() {
+    setFinding(true);
+    setError(null);
+    try {
+      if (!title.trim() || !artist.trim()) {
+        throw new Error('Please enter both a song title and an artist.');
+      }
+      const apiBase = getApiBase();
+      const resp = await fetch(`${apiBase}/api/find-lyrics`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ title, artist })
+      });
+      const data = await resp.json();
+      if (!resp.ok) throw new Error(data.error || 'Failed to find lyrics');
+      setLyrics(data.lyrics || '');
+    } catch (err: any) {
+      setError(err.message || String(err));
+    } finally {
+      setFinding(false);
+    }
+  }
 
   async function handleGenerate() {
     setLoading(true);
@@ -15,7 +43,7 @@ export default function App() {
     setResult(null);
     try {
       // Use VITE_API_BASE_URL in production, fall back to relative path in dev
-      const apiBase = import.meta.env.VITE_API_BASE_URL || '';
+      const apiBase = getApiBase();
       const resp = await fetch(`${apiBase}/api/generate`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -45,6 +73,41 @@ export default function App() {
           
           {/* Main Content Area (Left Column) */}
           <div className="md:col-span-2 space-y-6">
+            {/* Find Lyrics Input */}
+            <div className="bg-white/60 backdrop-blur-sm rounded-lg shadow-lg p-4">
+              <div className="grid grid-cols-1 md:grid-cols-5 gap-3 items-end">
+                <div className="md:col-span-2">
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Song Title</label>
+                  <input
+                    type="text"
+                    value={title}
+                    onChange={(e) => setTitle(e.target.value)}
+                    placeholder="e.g., Another Measure"
+                    className="w-full p-3 rounded-md border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white/80"
+                  />
+                </div>
+                <div className="md:col-span-2">
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Artist</label>
+                  <input
+                    type="text"
+                    value={artist}
+                    onChange={(e) => setArtist(e.target.value)}
+                    placeholder="e.g., 1Spirit & Theophilus Sunday"
+                    className="w-full p-3 rounded-md border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white/80"
+                  />
+                </div>
+                <div className="md:col-span-1">
+                  <button
+                    onClick={handleFindLyrics}
+                    disabled={finding || !title.trim() || !artist.trim()}
+                    className={`w-full p-3 rounded-md font-semibold text-white transition-all duration-200 ${finding || !title.trim() || !artist.trim() ? 'bg-gray-400 cursor-not-allowed' : 'bg-blue-600 hover:bg-blue-700 shadow-md'}`}
+                  >
+                    {finding ? 'Finding…' : 'Find Lyrics'}
+                  </button>
+                </div>
+              </div>
+            </div>
+
             <div className="bg-white/60 backdrop-blur-sm rounded-lg shadow-lg p-4">
               <textarea
                 value={lyrics}

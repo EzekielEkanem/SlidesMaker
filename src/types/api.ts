@@ -22,3 +22,13 @@ export interface ErrorResponse {
   error: string;
   code?: string;
 }
+
+// Phase 3 — AI-powered lyrics fetching
+export interface FindLyricsRequest {
+  title: string;
+  artist: string;
+}
+
+export interface FindLyricsResponse {
+  lyrics: string;
+}

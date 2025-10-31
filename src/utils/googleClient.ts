@@ -32,7 +32,7 @@ export class GoogleAPIClient {
 
   public async createPresentation(title: string) {
     const response: any = await this.slides.presentations.create({
-      auth: this.auth,
+      auth: this.auth as any,
       requestBody: { title }
     });
     return response.data;
@@ -40,7 +40,7 @@ export class GoogleAPIClient {
 
   public async batchUpdate(presentationId: string, requests: any[]) {
     const response: any = await this.slides.presentations.batchUpdate({
-      auth: this.auth,
+      auth: this.auth as any,
       presentationId,
       requestBody: { requests }
     });
@@ -49,7 +49,7 @@ export class GoogleAPIClient {
 
   public async setPermissions(fileId: string) {
     const response: any = await this.drive.permissions.create({
-      auth: this.auth,
+      auth: this.auth as any,
       fileId,
       requestBody: {
         role: 'writer',

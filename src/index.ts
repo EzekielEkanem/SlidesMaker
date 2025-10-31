@@ -31,7 +31,7 @@ app.use((err: Error, req: express.Request, res: express.Response, next: express.
   const googleError = err as any;
   if (googleError.code === 401 || googleError.status === 401) {
     return res.status(500).json({
-      error: 'Google API authentication failed. Check your service account credentials.',
+      error: 'Google API authentication failed. Check your OAuth credentials (CLIENT_ID/CLIENT_SECRET/REFRESH_TOKEN/REDIRECT_URI).',
       details: googleError.message
     });
   }

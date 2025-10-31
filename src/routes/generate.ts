@@ -18,15 +18,16 @@ function computeFontSizeForText(text: string, preferred?: number, isAutoFit?: bo
   const maxLinesPerSlide = 10;
   
   // Calculate scale factors - using linear scaling for more aggressive adjustment
-  const charScale = Math.min(1, maxCharsPerSlide / chars);
-  const lineScale = Math.min(1, maxLinesPerSlide / lines);
+  const charScale = maxCharsPerSlide / chars;
+  const lineScale = maxLinesPerSlide / lines;
   
   // Use the more restrictive constraint
-  const scale = Math.min(charScale, lineScale);
+  const scale = Math.pow(Math.min(charScale, lineScale), 0.5);
   
   // Apply scale with a floor to maintain readability
-  const scaledSize = base * scale;
-  const size = Math.max(10, Math.min(base, Math.round(scaledSize)));
+  const scaledSize = (base * scale) + 2 ;
+  const size = Math.min(44, Math.max(16, Math.round(scaledSize)));
+
   
   console.log(`Auto-fit: ${chars} chars, ${lines} lines -> ${size}pt (scale: ${scale.toFixed(2)})`);
   
@@ -121,6 +122,25 @@ export async function generateHandler(req: Request, res: Response) {
         }
       });
 
+      // --- Alternative (commented): Native Slides autofit ---
+      // If you want to try Google Slides' native autofit again, uncomment this block.
+      // Note some accounts/layouts can reject this field with a 400 error.
+      // slideRequests.push({
+      //   updateShapeProperties: {
+      //     objectId: boxId,
+      //     shapeProperties: {
+      //       autofit: {
+      //         autofitType: 'TEXT_AUTOFIT'
+      //       }
+      //     },
+      //     fields: 'autofit'
+      //   }
+      // });
+
+      // Note: Native Slides autofit via updateShapeProperties is unreliable and
+      // previously caused API errors. We instead compute a font size server-side
+      // (below) to approximate autofit behavior.
+
       // Insert text
       slideRequests.push({
         insertText: {
@@ -130,12 +150,53 @@ export async function generateHandler(req: Request, res: Response) {
       });
 
       // Style the text (server-side auto-fit via computed font size)
+      // --- Previous approach (commented, kept for reference) ---
+      // This version only set fontSize when isAutoFit was false, otherwise relied on
+      // Slides' native behavior. Keep as a fallback if you want to compare.
+      // {
+      //   const stylePayload: any = {};
+      //   const fields: string[] = [];
+      //   if (style.isAutoFit === false) {
+      //     stylePayload.fontSize = {
+      //       magnitude: style.fontSize ?? 24,
+      //       unit: 'PT'
+      //     };
+      //     fields.push('fontSize');
+      //   }
+      //   if (style.fontFamily) {
+      //     stylePayload.fontFamily = style.fontFamily;
+      //     fields.push('fontFamily');
+      //   }
+      //   if (style.fontColor) {
+      //     stylePayload.foregroundColor = { opaqueColor: { rgbColor: hexToRgb(style.fontColor) } };
+      //     fields.push('foregroundColor');
+      //   }
+      //   if (style.isBold) {
+      //     stylePayload.bold = true;
+      //     fields.push('bold');
+      //   }
+      //   if (style.isItalic) {
+      //     stylePayload.italic = true;
+      //     fields.push('italic');
+      //   }
+      //   if (fields.length > 0) {
+      //     slideRequests.push({
+      //       updateTextStyle: {
+      //         objectId: boxId,
+      //         style: stylePayload,
+      //         textRange: { type: 'ALL' },
+      //         fields: fields.join(',')
+      //       }
+      //     });
+      //   }
+      // }
+      // --- End previous approach ---
+
       {
         const fontSize = computeFontSizeForText(group, style.fontSize, style.isAutoFit);
-        const stylePayload: any = {
-          fontSize
-        };
+        const stylePayload: any = { fontSize };
         const fields: string[] = ['fontSize'];
+
         if (style.fontFamily) {
           stylePayload.fontFamily = style.fontFamily;
           fields.push('fontFamily');
@@ -161,18 +222,18 @@ export async function generateHandler(req: Request, res: Response) {
             fields: fields.join(',')
           }
         });
+      }
 
-        // Paragraph alignment (center) if selected
-        if (style.isCentered) {
-          slideRequests.push({
-            updateParagraphStyle: {
-              objectId: boxId,
-              style: { alignment: 'CENTER' },
-              textRange: { type: 'ALL' },
-              fields: 'alignment'
-            }
-          });
-        }
+      // Paragraph alignment (center) if selected
+      if (style.isCentered) {
+        slideRequests.push({
+          updateParagraphStyle: {
+            objectId: boxId,
+            style: { alignment: 'CENTER' },
+            textRange: { type: 'ALL' },
+            fields: 'alignment'
+          }
+        });
       }
 
       return slideRequests;

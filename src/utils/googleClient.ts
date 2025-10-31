@@ -1,5 +1,4 @@
 import { google } from 'googleapis';
-import { OAuth2Client } from 'google-auth-library';
 
 const SCOPES = [
   'https://www.googleapis.com/auth/presentations',
@@ -8,12 +7,12 @@ const SCOPES = [
 
 export class GoogleAPIClient {
   private static instance: GoogleAPIClient;
-  private auth: OAuth2Client;
+  private auth: InstanceType<typeof google.auth.OAuth2>;
   private slides = google.slides('v1');
   private drive = google.drive('v3');
 
   private constructor() {
-    this.auth = new OAuth2Client(
+    this.auth = new google.auth.OAuth2(
       process.env.CLIENT_ID,
       process.env.CLIENT_SECRET,
       process.env.REDIRECT_URI
@@ -48,13 +47,14 @@ export class GoogleAPIClient {
   }
 
   public async setPermissions(fileId: string) {
+    // Make the file editable by anyone with the link (Phase 1 demo behavior)
     const response: any = await this.drive.permissions.create({
       auth: this.auth as any,
       fileId,
       requestBody: {
+        type: 'anyone',
         role: 'writer',
-        type: 'user',
-        emailAddress: 'ezekiel.een111@gmail.com'
+        allowFileDiscovery: false
       }
     });
     return response.data;

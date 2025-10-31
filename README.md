@@ -123,15 +123,20 @@ This approach separates your server and client for optimal performance and simpl
 1. Create a new **Web Service** on [Render](https://render.com)
 2. Connect your GitHub repository
 3. Configure:
-   - **Build Command**: `npm install && npm run build`
-   - **Start Command**: `node dist/index.js`
-   - **Environment Variables**:
+   - **Build Command**: `npm run build`
+   - **Start Command**: `npm start`
+   - **Environment Variables** (add all of these):
      - `CLIENT_ID`: Your Google OAuth client ID
      - `CLIENT_SECRET`: Your Google OAuth client secret
      - `REFRESH_TOKEN`: Your refresh token from `getRefreshToken.js`
      - `REDIRECT_URI`: Your OAuth redirect URI
      - `PORT`: Leave empty (Render auto-assigns) or set to `3000`
 4. Deploy and note your server URL (e.g., `https://slidesmaker.onrender.com`)
+
+**Important Notes:**
+- Render automatically runs `npm install` before the build command
+- TypeScript and type definitions are now in `dependencies` (not `devDependencies`) to ensure they're available during build
+- The `.nvmrc` file pins Node to version 20.x for stability
 
 #### Client on Vercel
 

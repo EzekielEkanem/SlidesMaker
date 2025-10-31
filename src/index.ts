@@ -25,6 +25,10 @@ app.use((req, res, next) => {
 });
 
 // Routes
+app.get('/api/health', (req, res) => {
+  res.json({ status: 'ok', timestamp: new Date().toISOString() });
+});
+
 app.post('/api/generate', generateHandler);
 
 // Error handling middleware

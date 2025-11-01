@@ -6,6 +6,9 @@ export default function App() {
   const [lyrics, setLyrics] = useState('');
   const [title, setTitle] = useState('');
   const [artist, setArtist] = useState('');
+  const [hymnNumber, setHymnNumber] = useState('');
+  const [hymnTitle, setHymnTitle] = useState('');
+  const [activeTab, setActiveTab] = useState<'lyrics' | 'hymn'>('lyrics');
   const [style, setStyle] = useState<SlideStyle>(DEFAULT_STYLE);
   const [loading, setLoading] = useState(false);
   const [finding, setFinding] = useState(false);
@@ -30,6 +33,32 @@ export default function App() {
       const data = await resp.json();
       if (!resp.ok) throw new Error(data.error || 'Failed to find lyrics');
       setLyrics(data.lyrics || '');
+    } catch (err: any) {
+      setError(err.message || String(err));
+    } finally {
+      setFinding(false);
+    }
+  }
+
+  async function handleFindHymn() {
+    setFinding(true);
+    setError(null);
+    try {
+      if (!hymnNumber.trim() && !hymnTitle.trim()) {
+        throw new Error('Please enter either a hymn number or title.');
+      }
+      const apiBase = getApiBase();
+      const resp = await fetch(`${apiBase}/api/find-hymn`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ 
+          number: hymnNumber.trim() || undefined, 
+          title: hymnTitle.trim() || undefined 
+        })
+      });
+      const data = await resp.json();
+      if (!resp.ok) throw new Error(data.error || 'Failed to find hymn');
+      setLyrics(data.hymn || '');
     } catch (err: any) {
       setError(err.message || String(err));
     } finally {
@@ -73,38 +102,99 @@ export default function App() {
           
           {/* Main Content Area (Left Column) */}
           <div className="md:col-span-2 space-y-6">
-            {/* Find Lyrics Input */}
-            <div className="bg-white/60 backdrop-blur-sm rounded-lg shadow-lg p-4">
-              <div className="grid grid-cols-1 md:grid-cols-5 gap-3 items-end">
-                <div className="md:col-span-2">
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Song Title</label>
-                  <input
-                    type="text"
-                    value={title}
-                    onChange={(e) => setTitle(e.target.value)}
-                    placeholder="e.g., Another Measure"
-                    className="w-full p-3 rounded-md border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white/80"
-                  />
-                </div>
-                <div className="md:col-span-2">
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Artist</label>
-                  <input
-                    type="text"
-                    value={artist}
-                    onChange={(e) => setArtist(e.target.value)}
-                    placeholder="e.g., 1Spirit & Theophilus Sunday"
-                    className="w-full p-3 rounded-md border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white/80"
-                  />
-                </div>
-                <div className="md:col-span-1">
-                  <button
-                    onClick={handleFindLyrics}
-                    disabled={finding || !title.trim() || !artist.trim()}
-                    className={`w-full p-3 rounded-md font-semibold text-white transition-all duration-200 ${finding || !title.trim() || !artist.trim() ? 'bg-gray-400 cursor-not-allowed' : 'bg-blue-600 hover:bg-blue-700 shadow-md'}`}
-                  >
-                    {finding ? 'Finding…' : 'Find Lyrics'}
-                  </button>
-                </div>
+            {/* Tabs for Lyrics vs Hymn */}
+            <div className="bg-white/60 backdrop-blur-sm rounded-lg shadow-lg">
+              <div className="flex border-b border-gray-200">
+                <button
+                  onClick={() => setActiveTab('lyrics')}
+                  className={`flex-1 px-6 py-3 font-semibold transition-colors ${
+                    activeTab === 'lyrics'
+                      ? 'text-blue-600 border-b-2 border-blue-600 bg-white/40'
+                      : 'text-gray-600 hover:text-gray-800 hover:bg-white/20'
+                  }`}
+                >
+                  🎵 Find Song Lyrics
+                </button>
+                <button
+                  onClick={() => setActiveTab('hymn')}
+                  className={`flex-1 px-6 py-3 font-semibold transition-colors ${
+                    activeTab === 'hymn'
+                      ? 'text-blue-600 border-b-2 border-blue-600 bg-white/40'
+                      : 'text-gray-600 hover:text-gray-800 hover:bg-white/20'
+                  }`}
+                >
+                  📖 Find Church Hymn
+                </button>
+              </div>
+
+              <div className="p-4">
+                {activeTab === 'lyrics' ? (
+                  <div className="grid grid-cols-1 md:grid-cols-5 gap-3 items-end">
+                    <div className="md:col-span-2">
+                      <label className="block text-sm font-medium text-gray-700 mb-1">Song Title</label>
+                      <input
+                        type="text"
+                        value={title}
+                        onChange={(e) => setTitle(e.target.value)}
+                        placeholder="e.g., Amazing Grace"
+                        className="w-full p-3 rounded-md border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white/80"
+                      />
+                    </div>
+                    <div className="md:col-span-2">
+                      <label className="block text-sm font-medium text-gray-700 mb-1">Artist</label>
+                      <input
+                        type="text"
+                        value={artist}
+                        onChange={(e) => setArtist(e.target.value)}
+                        placeholder="e.g., John Newton"
+                        className="w-full p-3 rounded-md border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white/80"
+                      />
+                    </div>
+                    <div className="md:col-span-1">
+                      <button
+                        onClick={handleFindLyrics}
+                        disabled={finding || !title.trim() || !artist.trim()}
+                        className={`w-full p-3 rounded-md font-semibold text-white transition-all duration-200 ${finding || !title.trim() || !artist.trim() ? 'bg-gray-400 cursor-not-allowed' : 'bg-blue-600 hover:bg-blue-700 shadow-md'}`}
+                      >
+                        {finding ? 'Finding…' : 'Find Lyrics'}
+                      </button>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="grid grid-cols-1 md:grid-cols-5 gap-3 items-end">
+                    <div className="md:col-span-2">
+                      <label className="block text-sm font-medium text-gray-700 mb-1">Hymn Number</label>
+                      <input
+                        type="text"
+                        value={hymnNumber}
+                        onChange={(e) => setHymnNumber(e.target.value)}
+                        placeholder="e.g., 127 (1-260)"
+                        className="w-full p-3 rounded-md border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white/80"
+                      />
+                    </div>
+                    <div className="md:col-span-2">
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        Or Hymn Title <span className="text-gray-500 text-xs">(optional)</span>
+                      </label>
+                      <input
+                        type="text"
+                        value={hymnTitle}
+                        onChange={(e) => setHymnTitle(e.target.value)}
+                        placeholder="e.g., Rock of Ages"
+                        className="w-full p-3 rounded-md border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white/80"
+                      />
+                    </div>
+                    <div className="md:col-span-1">
+                      <button
+                        onClick={handleFindHymn}
+                        disabled={finding || (!hymnNumber.trim() && !hymnTitle.trim())}
+                        className={`w-full p-3 rounded-md font-semibold text-white transition-all duration-200 ${finding || (!hymnNumber.trim() && !hymnTitle.trim()) ? 'bg-gray-400 cursor-not-allowed' : 'bg-green-600 hover:bg-green-700 shadow-md'}`}
+                      >
+                        {finding ? 'Finding…' : 'Find Hymn'}
+                      </button>
+                    </div>
+                  </div>
+                )}
               </div>
             </div>
 
@@ -112,7 +202,7 @@ export default function App() {
               <textarea
                 value={lyrics}
                 onChange={(e) => setLyrics(e.target.value)}
-                placeholder="Paste lyrics or text here, each block will become a slide (each block should be a verse or chorus of the song)..."
+                placeholder="Paste lyrics or text here, each block will become a slide (each block should be a verse or chorus of the song separated by a blank line)..."
                 className="w-full h-96 p-6 border-none rounded-lg focus:ring-2 focus:ring-blue-500 focus:bg-white bg-white/50 shadow-inner resize-none text-gray-800 placeholder-gray-500"
               />
             </div>

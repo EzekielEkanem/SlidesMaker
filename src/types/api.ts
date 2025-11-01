@@ -32,3 +32,15 @@ export interface FindLyricsRequest {
 export interface FindLyricsResponse {
   lyrics: string;
 }
+
+// Hymn search (Deeper Life Bible Church)
+export interface FindHymnRequest {
+  number?: string;
+  title?: string;
+}
+
+export interface FindHymnResponse {
+  hymn: string;
+  title: string;
+  number: string;
+}

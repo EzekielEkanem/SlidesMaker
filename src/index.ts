@@ -3,6 +3,7 @@ import dotenv from 'dotenv';
 import cors from 'cors';
 import { generateHandler } from './routes/generate.js';
 import { findLyricsHandler } from './routes/find-lyrics.js';
+import { findHymnHandler } from './routes/find-hymn.js';
 
 // Load environment variables
 dotenv.config();
@@ -32,6 +33,7 @@ app.get('/api/health', (req, res) => {
 
 app.post('/api/generate', generateHandler);
 app.post('/api/find-lyrics', findLyricsHandler);
+app.post('/api/find-hymn', findHymnHandler);
 
 // Error handling middleware
 app.use((err: Error, req: express.Request, res: express.Response, next: express.NextFunction) => {

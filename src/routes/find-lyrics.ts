@@ -2,7 +2,7 @@ import type { Request, Response } from 'express';
 import type { FindLyricsRequest, FindLyricsResponse } from '../types/api.js';
 
 // Use Node 18+/20+ native fetch. Ensure GEMINI_API_KEY is set in env.
-const GEMINI_API_URL = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-pro-latest:generateContent';
+const GEMINI_API_URL = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-pro-latest:generateContent';
 
 function buildPrompt(title: string, artist: string) {
   return `Please find the complete song lyrics for ${title} by ${artist}.

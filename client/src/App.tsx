@@ -11,6 +11,7 @@ export default function App() {
   const [activeTab, setActiveTab] = useState<'lyrics' | 'hymn'>('lyrics');
   const [style, setStyle] = useState<SlideStyle>(DEFAULT_STYLE);
   const [loading, setLoading] = useState(false);
+  const [aiLoading, setAiLoading] = useState(false);
   const [finding, setFinding] = useState(false);
   const [result, setResult] = useState<{ presentationUrl: string; slideCount: number } | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -85,6 +86,51 @@ export default function App() {
       setError(err.message || String(err))
     } finally {
       setLoading(false)
+    }
+  }
+
+  async function handleGenerateWithAI() {
+    setAiLoading(true);
+    setError(null);
+    setResult(null);
+    try {
+      if (!lyrics.trim()) throw new Error('Please provide lyrics or hymn text first.');
+      const apiBase = getApiBase();
+      // 1) Ask AI for theme suggestion
+      const suggestResp = await fetch(`${apiBase}/api/suggest-theme`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ lyrics })
+      });
+      const suggestion = await suggestResp.json();
+      if (!suggestResp.ok) throw new Error(suggestion.error || 'Failed to get AI theme suggestion');
+
+      // 2) Merge AI style with current toggles (keep user toggles like bold/italic/center/autoFit/fontSize)
+      const aiStyle: SlideStyle = {
+        ...style,
+        backgroundColor: suggestion.backgroundColor || style.backgroundColor,
+        fontColor: suggestion.fontColor || style.fontColor,
+        fontFamily: suggestion.fontFamily || style.fontFamily
+      };
+      setStyle(aiStyle);
+
+      // 3) Generate slides with suggested style and optional title
+      const genResp = await fetch(`${apiBase}/api/generate`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          lyrics,
+          presentationTitle: suggestion.title || undefined,
+          style: aiStyle
+        })
+      });
+      const data = await genResp.json();
+      if (!genResp.ok) throw new Error(data.error || data.code || 'Unknown');
+      setResult(data);
+    } catch (err: any) {
+      setError(err.message || String(err));
+    } finally {
+      setAiLoading(false);
     }
   }
 
@@ -207,7 +253,7 @@ export default function App() {
               />
             </div>
 
-            <div className="flex justify-center">
+            <div className="flex justify-center gap-3 flex-wrap">
               <button
                 onClick={handleGenerate}
                 disabled={loading || !lyrics.trim()}
@@ -225,6 +271,25 @@ export default function App() {
                     Generating...
                   </span>
                 ) : 'Generate Slides'}
+              </button>
+
+              <button
+                onClick={handleGenerateWithAI}
+                disabled={aiLoading || !lyrics.trim()}
+                className={`px-8 py-4 rounded-lg font-semibold text-white transition-all duration-200 transform
+                  ${aiLoading || !lyrics.trim()
+                    ? 'bg-gray-400 cursor-not-allowed'
+                    : 'bg-gradient-to-r from-emerald-600 to-teal-700 hover:from-emerald-700 hover:to-teal-800 shadow-lg hover:scale-105'}`}
+              >
+                {aiLoading ? (
+                  <span className="flex items-center gap-2">
+                    <svg className="animate-spin h-5 w-5" viewBox="0 0 24 24">
+                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
+                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+                    </svg>
+                    AI Generating...
+                  </span>
+                ) : 'Generate Slides with AI'}
               </button>
             </div>
 

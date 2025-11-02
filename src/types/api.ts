@@ -1,6 +1,7 @@
 // API Request/Response types
 export interface GenerateRequest {
   lyrics: string;
+  presentationTitle?: string;
   style?: {
     fontFamily?: string;
     fontSize?: number;
@@ -43,4 +44,16 @@ export interface FindHymnResponse {
   hymn: string;
   title: string;
   number: string;
+}
+
+// Theme suggestion (AI-powered)
+export interface SuggestThemeRequest {
+  lyrics: string;
+}
+
+export interface SuggestThemeResponse {
+  backgroundColor: string; // e.g. #RRGGBB
+  fontColor: string;       // e.g. #RRGGBB
+  fontFamily: string;      // web-safe/common font
+  title?: string;          // optional presentation title
 }

@@ -36,7 +36,7 @@ function computeFontSizeForText(text: string, preferred?: number, isAutoFit?: bo
 
 export async function generateHandler(req: Request, res: Response) {
   try {
-    const { lyrics, style = {} } = req.body as GenerateRequest;
+  const { lyrics, presentationTitle, style = {} } = req.body as GenerateRequest;
     
     if (!lyrics || typeof lyrics !== 'string') {
       return res.status(400).json({ error: 'Lyrics are required and must be a string' });
@@ -57,7 +57,8 @@ export async function generateHandler(req: Request, res: Response) {
     const googleClient = GoogleAPIClient.getInstance();
     
     // Create new presentation
-    const presentation = await googleClient.createPresentation('My Lyrics Presentation');
+  const title = presentationTitle && presentationTitle.trim() ? presentationTitle.trim() : 'My Lyrics Presentation';
+  const presentation = await googleClient.createPresentation(title);
     const presentationId = presentation.presentationId!;
 
     // Google Slides automatically creates a blank first slide. Get its ID to delete it.

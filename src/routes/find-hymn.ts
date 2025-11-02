@@ -45,13 +45,26 @@ export async function findHymnHandler(req: Request, res: Response) {
     }
 
     // Format the hymn text
-    const verses = hymn.verses || [];
-    const chorus = hymn.chorus;
-    
-    let hymnText = verses.join('\n\n');
-    if (chorus) {
-      hymnText += '\n\n[Chorus]\n' + chorus;
+    const verses: string[] = Array.isArray(hymn.verses) ? hymn.verses : [];
+    const chorus: string | false = hymn.chorus;
+
+    // Interleave chorus after each verse if chorus exists
+    let parts: string[] = [];
+    if (verses.length > 0) {
+      for (const verse of verses) {
+        if (verse && String(verse).trim()) {
+          parts.push(String(verse).trim());
+          if (chorus && String(chorus).trim()) {
+            parts.push(`[Chorus]\n${String(chorus).trim()}`);
+          }
+        }
+      }
+    } else if (chorus && String(chorus).trim()) {
+      // Fallback: if only chorus exists
+      parts.push(`[Chorus]\n${String(chorus).trim()}`);
     }
+
+    const hymnText = parts.join('\n\n');
 
     const payload: FindHymnResponse = {
       hymn: hymnText,

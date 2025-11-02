@@ -1,15 +1,34 @@
 # SlidesMaker
 
-Generate Google Slides presentations from lyrics or any text, with per-slide styling. Server is Express + TypeScript; client is React + Vite + Tailwind.
+A full-stack web application that transforms lyrics and text into beautiful Google Slides presentations with customizable styling and AI-powered theme suggestions.
+
+**Live Demo**: [Your deployed URL here]
+
+## Overview
+
+SlidesMaker is a modern web application built with:
+- **Backend**: Node.js + Express + TypeScript (deployed on Render)
+- **Frontend**: React + Vite + Tailwind CSS v4 (deployed on Vercel)
+- **APIs**: Google Slides API, Google Drive API, lyrics.ovh, Gemini AI
 
 ## Features
 
-- Convert text into Google Slides presentations
-- Split content by blank lines into separate slides
-- Customize fonts, colors, bold/italic, center alignment
-- Auto-fit behavior approximated server-side for reliable sizing
-- Secure Google OAuth2 integration (no service account for Phase 1)
-- TypeScript end to end
+### Core Functionality
+- ✨ **Convert text to Google Slides presentations** - Automatically split content by blank lines into separate slides
+- 🎨 **Rich styling controls** - Customize fonts, colors, bold/italic, center alignment, and auto-fit text sizing
+- 🤖 **AI-powered theme suggestions** - Get intelligent color, font, and title recommendations based on your content
+- 🎵 **Find song lyrics** - Search for song lyrics by title and artist using the free lyrics.ovh API
+- 📖 **Church hymn search** - Access Deeper Life Bible Church hymns (1-260) with automatic chorus repetition after each verse
+- 🔒 **Secure OAuth2 integration** - Google authentication handled entirely server-side
+- 📱 **Responsive design** - Works seamlessly on desktop, tablet, and mobile devices
+- 🚀 **TypeScript throughout** - Type-safe code from frontend to backend
+
+### Smart Features
+- **Auto-fit text sizing** - Server-side heuristic ensures text fits perfectly on slides
+- **Verse separation** - Intelligent blank-line handling for proper slide splitting
+- **Chorus interpolation** - For hymns, automatically inserts chorus after each verse
+- **Real-time preview** - See your lyrics/text before generating slides
+- **Tabbed interface** - Easy switching between song lyrics and hymn search
 
 ## Setup
 
@@ -39,6 +58,7 @@ cd ..
      - `CLIENT_ID` and `CLIENT_SECRET` from your OAuth client
      - `REFRESH_TOKEN` from the step above
      - `REDIRECT_URI` (first redirect URI in your OAuth client; for Desktop App, it will be the default installed URI)
+     - `GEMINI_API_KEY` from [Google AI Studio](https://makersuite.google.com/app/apikey) (for AI theme suggestions)
 
 4. Start the servers (two terminals):
 ```bash
@@ -57,10 +77,11 @@ Server runs on http://localhost:3000 (or PORT in `.env`). The client runs on htt
 
 Generate a new presentation from text input.
 
-Request body:
+**Request body:**
 ```json
 {
-  "lyrics": "Your text content\nSplit by lines",
+  "lyrics": "Your text content\n\nSeparate verses with blank lines",
+  "presentationTitle": "My Amazing Presentation",
   "style": {
     "fontFamily": "Times New Roman",
     "fontSize": 24,
@@ -74,11 +95,72 @@ Request body:
 }
 ```
 
-Response:
+**Response:**
 ```json
 {
   "presentationUrl": "https://docs.google.com/presentation/d/...",
-  "slideCount": 2
+  "slideCount": 3
+}
+```
+
+### POST /api/find-lyrics
+
+Search for song lyrics using the free lyrics.ovh API.
+
+**Request body:**
+```json
+{
+  "title": "Bohemian Rhapsody",
+  "artist": "Queen"
+}
+```
+
+**Response:**
+```json
+{
+  "lyrics": "Is this the real life?\nIs this just fantasy?\n\nCaught in a landslide..."
+}
+```
+
+### POST /api/find-hymn
+
+Search for Deeper Life Bible Church hymns by number (1-260) or title.
+
+**Request body:**
+```json
+{
+  "number": "127",
+  "title": "Rock of Ages"
+}
+```
+
+**Response:**
+```json
+{
+  "hymn": "Rock of Ages, cleft for me...\n\n[Chorus]\nLet me hide myself in Thee...",
+  "title": "Rock of Ages",
+  "number": "127"
+}
+```
+
+### POST /api/suggest-theme
+
+Get AI-powered theme suggestions based on lyrics content.
+
+**Request body:**
+```json
+{
+  "lyrics": "Your song lyrics or text content here"
+}
+```
+
+**Response:**
+```json
+{
+  "backgroundColor": "#1a1a2e",
+  "fontColor": "#eaeaea",
+  "fontFamily": "Montserrat",
+  "title": "Midnight Dreams"
 }
 ```
 
@@ -93,19 +175,64 @@ Response:
 
 ### Project Structure
 
-- `/src` - Source code
-  - `/routes` - Express route handlers
-  - `/types` - TypeScript type definitions
-  - `/utils` - Utility functions and classes
-  - `/__tests__` - Test files
-  - `getRefreshToken.js` - Helper to obtain OAuth refresh token (dev only)
-- `/client` - React + Vite app (Tailwind v4)
-  - `src/components/StyleControls.tsx` - UI for styling options
+```
+SlidesMaker/
+├── src/                          # Server source code (Node.js + Express + TypeScript)
+│   ├── routes/                   # API route handlers
+│   │   ├── generate.ts          # Generate Google Slides presentation
+│   │   ├── find-lyrics.ts       # Search song lyrics (lyrics.ovh API)
+│   │   ├── find-hymn.ts         # Search church hymns (gospel-hymns API)
+│   │   └── suggest-theme.ts     # AI theme suggestions (Gemini API)
+│   ├── types/                   # TypeScript type definitions
+│   │   ├── api.ts               # API request/response types
+│   │   └── slides.ts            # Google Slides API types
+│   ├── utils/                   # Utility functions and classes
+│   │   ├── googleClient.ts      # Google APIs OAuth2 client
+│   │   └── color.ts             # Color conversion utilities
+│   ├── __tests__/               # Server tests (Jest)
+│   ├── index.ts                 # Express server entry point
+│   └── getRefreshToken.js       # Helper to obtain OAuth refresh token (dev only)
+├── client/                       # Frontend (React + Vite + Tailwind CSS v4)
+│   ├── src/
+│   │   ├── components/
+│   │   │   └── StyleControls.tsx  # UI controls for slide styling
+│   │   ├── types/
+│   │   │   └── style.ts          # Frontend style types
+│   │   ├── App.tsx               # Main application component (tabbed interface)
+│   │   ├── main.tsx              # React app entry point
+│   │   └── styles.css            # Tailwind CSS v4 styles
+│   ├── index.html                # HTML template
+│   └── vite.config.ts            # Vite configuration
+├── .env.example                  # Environment variables template
+├── tsconfig.json                 # Server TypeScript config
+└── package.json                  # Server dependencies and scripts
+```
 
 ### Styling notes
 
-- Tailwind CSS v4 is configured in the client with `@tailwindcss/postcss` and `@import "tailwindcss"` in `styles.css`.
-- The server applies text styles using Google Slides batchUpdate. Auto-fit is implemented via a heuristic to avoid Slides API autofit inconsistencies.
+- **Tailwind CSS v4**: Configured in the client with `@tailwindcss/postcss` and `@import "tailwindcss"` in `styles.css`
+- **Server-side styling**: Text styles applied using Google Slides `batchUpdate` API
+- **Auto-fit implementation**: Server-side heuristic calculates font size based on text length and line count to avoid Slides API autofit inconsistencies
+- **Available fonts**: Arial, Roboto, Montserrat, Open Sans, Lato, Georgia, Times New Roman
+- **Gradient backgrounds**: Support for hex color backgrounds and font colors with high-contrast validation
+
+### How the Web App Works
+
+1. **User inputs lyrics/text**: Via manual entry, song search (lyrics.ovh), or hymn search (gospel-hymns API)
+2. **Optional AI suggestions**: Click "Generate Slides with AI" to get theme recommendations from Gemini
+3. **Customize styling**: Use the StyleControls panel to adjust fonts, colors, and formatting
+4. **Generate slides**: Server creates a Google Slides presentation in your Drive using OAuth2
+5. **Share**: Presentation is automatically set to "anyone with link can edit"
+
+### Architecture
+
+- **Client-Server separation**: Frontend (Vercel) and backend (Render) deployed independently
+- **Server-side authentication**: All Google API calls happen on the server; client never handles credentials
+- **CORS configuration**: Explicit CORS headers allow cross-origin requests from Vercel to Render
+- **External APIs**:
+  - **lyrics.ovh**: Free lyrics API, no key required
+  - **gospel-hymns API**: Deeper Life Bible Church hymns database
+  - **Gemini AI**: Theme suggestions based on content analysis
 
 ### Security notes
 
@@ -130,6 +257,7 @@ This approach separates your server and client for optimal performance and simpl
      - `CLIENT_SECRET`: Your Google OAuth client secret
      - `REFRESH_TOKEN`: Your refresh token from `getRefreshToken.js`
      - `REDIRECT_URI`: Your OAuth redirect URI
+     - `GEMINI_API_KEY`: Your Gemini API key from [Google AI Studio](https://makersuite.google.com/app/apikey)
      - `PORT`: Leave empty (Render auto-assigns) or set to `3000`
 4. Deploy and note your server URL (e.g., `https://slidesmaker.onrender.com`)
 
@@ -189,15 +317,81 @@ npx serve client/dist -p 5173
 
 Open http://localhost:5173 and test.
 
+## Technologies Used
+
+### Backend
+- **Node.js** - JavaScript runtime
+- **Express** - Web framework
+- **TypeScript** - Type-safe JavaScript
+- **Google APIs** - Slides API v1, Drive API v3
+- **OAuth2** - Secure authentication
+- **Jest** - Testing framework
+
+### Frontend
+- **React 18** - UI library
+- **Vite** - Build tool and dev server
+- **Tailwind CSS v4** - Utility-first CSS framework
+- **TypeScript** - Type-safe components
+
+### External APIs
+- **lyrics.ovh** - Free lyrics search (no API key required)
+- **gospel-hymns API** - Deeper Life Bible Church hymns database
+- **Gemini AI** - AI-powered theme suggestions
+
+### Deployment
+- **Render** - Server hosting (Node.js)
+- **Vercel** - Frontend hosting (React)
+- **GitHub** - Version control and CI/CD
+
 ## API Quotas and Limits
 
-The Google Slides API has the following quotas:
-
+### Google Slides API
 - Queries per minute per user: 300
-- Queries per minute per project: 1800
+- Queries per minute per project: 1,800
 - Requests per day per project: 86,400
+- For more details, see [Google Slides API Quotas](https://developers.google.com/slides/quotas)
 
-For more details, see [Google Slides API Quotas](https://developers.google.com/slides/quotas).
+### External APIs
+- **lyrics.ovh**: No documented rate limits (free tier)
+- **gospel-hymns API**: No authentication required
+- **Gemini API**: Free tier includes 60 requests per minute
+
+## Troubleshooting
+
+### Common Issues
+
+**"OAuth authentication failed"**
+- Verify `CLIENT_ID`, `CLIENT_SECRET`, `REFRESH_TOKEN`, and `REDIRECT_URI` in your `.env`
+- Regenerate refresh token using `node src/getRefreshToken.js`
+- Ensure Google Slides API and Drive API are enabled in Google Cloud Console
+
+**"Lyrics not found"**
+- Check spelling of song title and artist name
+- Try variations (e.g., "feat." vs "featuring")
+- Some songs may not be in the lyrics.ovh database
+
+**"CORS error" in production**
+- Verify `VITE_API_BASE_URL` is set correctly in Vercel (no trailing slash)
+- Check that Render server has CORS configured to allow your Vercel domain
+
+**"Failed to generate presentation"**
+- Check Google API quotas haven't been exceeded
+- Verify the presentation title doesn't contain invalid characters
+- Ensure lyrics text is not empty
+
+**Client can't reach server in development**
+- Make sure server is running on port 3000: `npm run dev`
+- Check Vite proxy configuration in `client/vite.config.ts`
+
+## What's the Difference?
+
+**Website vs Web Application vs Desktop App:**
+
+- **Website**: Static pages with mostly content (like a blog). Limited interactivity. Example: Wikipedia, news sites.
+- **Web Application (Webapp)**: Interactive software running in a browser with dynamic features. SlidesMaker is a webapp—it has a React frontend, Node.js backend, APIs, and performs complex operations.
+- **Desktop Application**: Standalone software installed on your computer (like Microsoft Word). Runs natively without a browser.
+
+**SlidesMaker is a full-stack web application** with client-server architecture deployed on the cloud.
 
 ## Contributing
 

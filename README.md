@@ -2,7 +2,7 @@
 
 A full-stack web application that transforms lyrics and text into beautiful Google Slides presentations with customizable styling and AI-powered theme suggestions.
 
-**Live Demo**: [Your deployed URL here]
+**Live Demo**: <img src='./slidesmaker.gif' title='Video Walkthrough' width='' alt='Video Walkthrough' />
 
 ## Overview
 
@@ -29,47 +29,6 @@ SlidesMaker is a modern web application built with:
 - **Chorus interpolation** - For hymns, automatically inserts chorus after each verse
 - **Real-time preview** - See your lyrics/text before generating slides
 - **Tabbed interface** - Easy switching between song lyrics and hymn search
-
-## Setup
-
-1. Clone the repository:
-```bash
-git clone https://github.com/EzekielEkanem/SlidesMaker.git
-cd SlidesMaker
-```
-
-2. Install dependencies (server + client):
-```bash
-npm install
-cd client && npm install
-cd ..
-```
-
-3. Set up Google OAuth2 (Slides + Drive APIs):
-   - Create a project in [Google Cloud Console](https://console.cloud.google.com)
-   - Enable: Google Slides API and Google Drive API
-   - Configure an OAuth Consent Screen (Internal or External as needed)
-   - Create OAuth 2.0 Client Credentials (type: Desktop App is simplest for dev)
-   - Get a refresh token (one-time) using the helper script:
-     1) Save your downloaded OAuth client file as `credentials.json` in project root (do NOT commit it)
-     2) Run: `node src/getRefreshToken.js` and follow the prompt to authorize
-     3) Copy the printed `refresh_token`
-   - Copy `.env.example` to `.env` and fill values:
-     - `CLIENT_ID` and `CLIENT_SECRET` from your OAuth client
-     - `REFRESH_TOKEN` from the step above
-     - `REDIRECT_URI` (first redirect URI in your OAuth client; for Desktop App, it will be the default installed URI)
-     - `GEMINI_API_KEY` from [Google AI Studio](https://makersuite.google.com/app/apikey) (for AI theme suggestions)
-
-4. Start the servers (two terminals):
-```bash
-# Terminal A (server)
-npm run build && npm run dev
-
-# Terminal B (client)
-cd client && npm run dev
-```
-
-Server runs on http://localhost:3000 (or PORT in `.env`). The client runs on http://localhost:5173 and proxies `/api` to the server.
 
 ## API Usage
 
@@ -279,43 +238,6 @@ This approach separates your server and client for optimal performance and simpl
      - `VITE_API_BASE_URL`: Your Render server URL (no trailing slash, e.g., `https://slidesmaker.onrender.com`)
 4. Deploy
 
-#### Alternative: Client on Netlify
-
-1. Create a new site on [Netlify](https://netlify.com)
-2. Connect your GitHub repository
-3. Configure:
-   - **Base Directory**: `client`
-   - **Build Command**: `npm install && npm run build`
-   - **Publish Directory**: `client/dist`
-   - **Environment Variables**:
-     - `VITE_API_BASE_URL`: Your Render server URL (e.g., `https://slidesmaker.onrender.com`)
-4. Deploy
-
-### How It Works
-
-- **Development**: Client uses Vite proxy (`/api` → `http://localhost:3000`)
-- **Production**: Client uses `VITE_API_BASE_URL` to call your deployed server
-- **Mobile/Desktop**: Works on all devices—the "Desktop app" OAuth type only affects how you obtained the refresh token, not how users access your site
-- **Authentication**: Server-side only. Browsers never authenticate with Google; they just call your API
-
-### Testing Production Setup Locally
-
-```bash
-# Build both
-npm run build
-cd client && npm run build && cd ..
-
-# Set production API URL
-export VITE_API_BASE_URL=http://localhost:3000
-
-# Start server
-node dist/index.js &
-
-# Serve client (using a static server)
-npx serve client/dist -p 5173
-```
-
-Open http://localhost:5173 and test.
 
 ## Technologies Used
 
@@ -325,7 +247,6 @@ Open http://localhost:5173 and test.
 - **TypeScript** - Type-safe JavaScript
 - **Google APIs** - Slides API v1, Drive API v3
 - **OAuth2** - Secure authentication
-- **Jest** - Testing framework
 
 ### Frontend
 - **React 18** - UI library
@@ -355,43 +276,6 @@ Open http://localhost:5173 and test.
 - **lyrics.ovh**: No documented rate limits (free tier)
 - **gospel-hymns API**: No authentication required
 - **Gemini API**: Free tier includes 60 requests per minute
-
-## Troubleshooting
-
-### Common Issues
-
-**"OAuth authentication failed"**
-- Verify `CLIENT_ID`, `CLIENT_SECRET`, `REFRESH_TOKEN`, and `REDIRECT_URI` in your `.env`
-- Regenerate refresh token using `node src/getRefreshToken.js`
-- Ensure Google Slides API and Drive API are enabled in Google Cloud Console
-
-**"Lyrics not found"**
-- Check spelling of song title and artist name
-- Try variations (e.g., "feat." vs "featuring")
-- Some songs may not be in the lyrics.ovh database
-
-**"CORS error" in production**
-- Verify `VITE_API_BASE_URL` is set correctly in Vercel (no trailing slash)
-- Check that Render server has CORS configured to allow your Vercel domain
-
-**"Failed to generate presentation"**
-- Check Google API quotas haven't been exceeded
-- Verify the presentation title doesn't contain invalid characters
-- Ensure lyrics text is not empty
-
-**Client can't reach server in development**
-- Make sure server is running on port 3000: `npm run dev`
-- Check Vite proxy configuration in `client/vite.config.ts`
-
-## What's the Difference?
-
-**Website vs Web Application vs Desktop App:**
-
-- **Website**: Static pages with mostly content (like a blog). Limited interactivity. Example: Wikipedia, news sites.
-- **Web Application (Webapp)**: Interactive software running in a browser with dynamic features. SlidesMaker is a webapp—it has a React frontend, Node.js backend, APIs, and performs complex operations.
-- **Desktop Application**: Standalone software installed on your computer (like Microsoft Word). Runs natively without a browser.
-
-**SlidesMaker is a full-stack web application** with client-server architecture deployed on the cloud.
 
 ## Contributing
 
